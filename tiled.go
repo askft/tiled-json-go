@@ -1,4 +1,4 @@
-package tiled
+package main
 
 import (
 	"encoding/json"
