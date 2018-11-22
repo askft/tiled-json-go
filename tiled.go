@@ -15,18 +15,31 @@ import (
 		  testing material.
 		- Comment all fields with the description in the link above.
 		  Textually separate optional fields and describe them as such.
+		- Add the omitempty tag where appropriate.
 */
 
-// Parse takes a Tiled map file exported as JSON and parses it into
-// a Golang data structure.
-func Parse(filename string) (*Map, error) {
+// ParseTilemap takes a Tiled tilemap JSON file
+// and converts it into a Golang data structure.
+func ParseTilemap(path string) (*Map, error) {
 	m := &Map{}
-	jdata, err := ioutil.ReadFile(filename)
+	jdata, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 	err = json.Unmarshal(jdata, m)
 	return m, err
+}
+
+// ParseTileset takes a Tiled tileset JSON file
+// and converts it into a Golang data structure.
+func ParseTileset(path string) (*Tileset, error) {
+	ts := &Tileset{}
+	jdata, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(jdata, ts)
+	return ts, err
 }
 
 // Map describes a Tiled map.
@@ -54,9 +67,9 @@ type Map struct {
 
 // Property TODO describe
 type Property struct {
-	Name  string      `json:"name"`
-	Type  string      `json:"type"`
-	Value interface{} `json:"value"`
+	Name  string      `json:"name"`  // Name of property
+	Type  string      `json:"type"`  // Type of property value
+	Value interface{} `json:"value"` // Value of property
 }
 
 // Layer TODO describe
@@ -83,7 +96,7 @@ type Layer struct {
 
 	// ObjectGroup only
 	Objects   []Object `json:"objects"`   // Array of objects
-	Draworder string   `json:"draworder"` // "topdown" (default) or "index"
+	DrawOrder string   `json:"draworder"` // "topdown" (default) or "index"
 
 	// Group only
 	Layers []Layer `json:"layers"` // Array of layers
@@ -104,24 +117,26 @@ type Chunk struct {
 
 // Object TODO describe
 type Object struct {
-	ID         int                    `json:"id"`         // Incremental id - unique across all objects
-	GID        int                    `json:"gid"`        // GID, only if object comes from a Tilemap
-	Name       string                 `json:"name"`       // String assigned to name field in editor
-	Type       string                 `json:"type"`       // String assigned to type field in editor
-	X          float64                `json:"x"`          // X coordinate in pixels
-	Y          float64                `json:"y"`          // Y coordinate in pixels
-	Width      float64                `json:"width"`      // Width in pixels, ignored if using a gid
-	Height     float64                `json:"height"`     // Height in pixels, ignored if using a gid
-	Visible    bool                   `json:"visible"`    // Whether object is shown in editor
-	Ellipse    bool                   `json:"ellipse"`    // Used to mark an object as an ellipse
-	Point      bool                   `json:"point"`      // Used to mark an object as a point
-	Polygon    []Coordinate           `json:"polygon"`    // A list of x,y coordinates in pixels
-	Polyline   []Coordinate           `json:"polyline"`   // A list of x,y coordinates in pixels
-	Properties []Property             `json:"properties"` // A list of properties (name, value, type)
-	Rotation   float64                `json:"rotation"`   // Angle in degrees clockwise
-	Template   string                 `json:"template"`   // Reference to a template file, in case object is a template instance
-	Text       map[string]interface{} `json:"text"`       // String key-value pairs
+	ID         int                    `json:"id"`                 // Incremental id - unique across all objects
+	GID        int                    `json:"gid"`                // GID, only if object comes from a Tilemap
+	Name       string                 `json:"name"`               // String assigned to name field in editor
+	Type       string                 `json:"type"`               // String assigned to type field in editor
+	X          float64                `json:"x"`                  // X coordinate in pixels
+	Y          float64                `json:"y"`                  // Y coordinate in pixels
+	Width      float64                `json:"width"`              // Width in pixels, ignored if using a gid
+	Height     float64                `json:"height"`             // Height in pixels, ignored if using a gid
+	Visible    bool                   `json:"visible"`            // Whether object is shown in editor
+	Ellipse    bool                   `json:"ellipse"`            // Used to mark an object as an ellipse
+	Point      bool                   `json:"point"`              // Used to mark an object as a point
+	Polygon    []Coordinate           `json:"polygon"`            // A list of x,y coordinates in pixels
+	Polyline   []Coordinate           `json:"polyline"`           // A list of x,y coordinates in pixels
+	Properties []Property             `json:"properties"`         // A list of properties (name, value, type)
+	Rotation   float64                `json:"rotation"`           // Angle in degrees clockwise
+	Template   string                 `json:"template,omitempty"` // Reference to a template file, in case object is a template instance
+	Text       map[string]interface{} `json:"text"`               // String key-value pairs
 }
+
+// TODO, read up about templates here http://docs.mapeditor.org/en/stable/manual/using-templates/
 
 // Coordinate TODO describe
 type Coordinate struct {
@@ -144,6 +159,7 @@ type Offset struct {
 // The order of indices is: top-left, top-right, bottom-left, bottom-right.
 type Tileset struct {
 	FirstGID         int        `json:"firstgid"`         // GID corresponding to the first tile in the set
+	Source           string     `json:"source"`           // Only used if an external tileset is referred to
 	Name             string     `json:"name"`             // Name given to this tileset
 	Type             string     `json:"type"`             // "tileset" (for tileset files, since 1.0)
 	Columns          int        `json:"columns"`          // The number of tile columns in the tileset
@@ -182,7 +198,7 @@ type Tile struct {
 	Image       string     `json:"image"`       // Image representing this tile (optional)
 	ImageHeight int        `json:"imageheight"` // Height of the tile image in pixels
 	ImageWidth  int        `json:"imagewidth"`  // Width of the tile image in pixels
-	ObjectGroup Layer      `json:"objectgroup"`
+	ObjectGroup Layer      `json:"objectgroup"` // Layer with type "objectgroup" (optional)
 }
 
 // Frame TODO describe
